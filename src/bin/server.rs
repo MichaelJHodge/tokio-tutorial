@@ -1,13 +1,21 @@
 use bytes::Bytes;
 use mini_redis::{Connection, Frame};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{mpsc, Arc, Mutex};
 use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::mpsc;
 
 type db = Arc<Mutex<HashMap<String, Bytes>>>;
 
+#[derive(Debug)]
+enum Command {
+    Get { key: String },
+    Set { key: String, val: Bytes },
+}
+
 #[tokio::main]
 async fn main() {
+    let (tx, mut rx) = mpsc::channel(32);
     // Bind the listener to the address
     let listener = TcpListener::bind("127.0.0.1:6379").await.unwrap();
 
